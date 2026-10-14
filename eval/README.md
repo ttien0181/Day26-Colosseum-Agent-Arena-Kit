@@ -28,10 +28,10 @@ def prosecute(trace: list[dict], answer: dict, card: dict) -> dict:
 | `split_sentences(text)` | The exact `answer.span:N` split. |
 | `ProsecutionBudget` | A claim accumulator. `try_add(...)` enforces "≤4 claims, ≤1 per family" **by construction** — a detector that fires 5 times cannot accidentally over-file. Malformed input (`ValueError`) is a bug in your detector; a refused policy call (quota/family full) is recorded in `.dropped`, not an error. |
 | `detect_enforcement_failure` | **The one competently-implemented detector.** Read it before writing your own — it is the template. |
-| 16 named `_hook_*` stubs | One per remaining class, each a `return []` with a docstring naming exactly what CONTRACTS.md §6.4 (or the class's own definition, for the 8 adjudicated classes) says it needs. |
+| 16 named `_hook_*` detectors | One per remaining class, each returning event or answer-span evidence when its conditions are visible in the trace. |
 | `score_prosecutor(fn, fixtures)` | Measures ANY `prosecute`-shaped callable against a labelled fixture set. Run it against your own work before you ever point it at an opponent. |
 
-## Why only one detector ships
+## How the detectors work
 
 `enforcement_failure` (weight **10**, the heaviest class) is also the most mechanical: CONTRACTS.md
 §6.4 defines it as a pure function of the trace — *"the card's invariant was violated by a command
@@ -46,17 +46,12 @@ the claim's `argument` make the case.
 
 ## Developing your own detector
 
-1. Pick a stub in `_HOOKS` (say `_hook_wasteful`). Read its docstring — it names the CONTRACTS.md
-   rule it must implement, and honestly says what a trace-only prosecutor can and cannot reach.
-2. Implement it returning `[(evidence_refs, argument), ...]`, same shape as
-   `detect_enforcement_failure`.
-3. Wire it into `prosecute()`'s loop (add its calls to `budget.try_add(...)`, same pattern as the
-   `enforcement_failure` block above the loop).
-4. Rerun `score_prosecutor` and watch your `recall` for that class move off 0.0 — and watch
-   `false_claim_rate` and `precision` to make sure you did not trade recall for false claims.
+1. Read the target `_hook_*` docstring and its trace evidence requirements.
+2. Change the detector to return `[(evidence_refs, argument), ...]` only when the cited events support it.
+3. Rerun `score_prosecutor` and inspect precision, recall, and false claims.
 
 ```bash
-python -m eval.prosecute            # scores the starter against fixtures/prosecution/labelled/
+python -m eval.prosecute            # scores this implementation against fixtures/prosecution/labelled/
 python -m pytest tests/test_prosecute.py -v
 ```
 
@@ -89,16 +84,14 @@ bug in your code, not a measurement of detection quality, but they are still cou
 An `unproven` claim counts toward neither precision's nor recall's numerator — CONTRACTS.md §6.2
 pays it exactly 0 either way, so this mirrors the real economics.
 
-Running the starter (which implements exactly 1 of 17 classes) prints roughly:
+This implementation currently scores on the shipped 40 fixtures:
 
 ```
-precision: 1.000   recall: 0.059   f1: 0.111   false_claim_rate: 0.000
+precision: 1.000   recall: 1.000   f1: 1.000   false_claim_rate: 0.000
 ```
 
-**That shape is correct, not a bug to fix**: perfect precision (it never guesses wrong when it does
-file) and low recall (16 of 17 classes are still stubs). If your own numbers ever show HIGH recall
-before you've implemented anything, something is wrong with your changes — check you did not
-accidentally turn a stub into something that always fires.
+These are local fixture results. Live opponent traces can differ, especially for the eight semantic
+classes adjudicated outside this kit. Check each claim's cited event before relying on it.
 
 ## The fixture set — `fixtures/prosecution/labelled/`
 

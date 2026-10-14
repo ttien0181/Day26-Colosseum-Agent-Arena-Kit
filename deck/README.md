@@ -145,16 +145,15 @@ even though it is not literally named `replica_flip` (`validate_deck.py`'s `R5b`
 **`deck/lineup.json`** plays all 10 attacks, none of the 4 blanks, in this order:
 
 ```
-atk_05 (schema_bomb, cheap opener) → atk_01 (shadow) → atk_04 (poisoned_result) →
-atk_08 (forged_card) → atk_03 (drift) → atk_09 (faithless_peer) → atk_06 (header_spoof) →
-atk_02 (replica_flip) → atk_10 (identity/aud) → atk_07 (identity/act, CONTRACTS' own worked case, saved for last)
+atk_01 (shadow) → atk_08 (forged_card) → atk_02 (replica_flip) →
+atk_04 (poisoned_result) → atk_07 (identity/act) → atk_06 (header_spoof) →
+atk_05 (schema_bomb) → atk_09 (faithless_peer) → atk_03 (drift) → atk_10 (identity/aud)
 ```
 
-Layers alternate deliberately (MCP, MCP, MCP, A2A, MCP, A2A, gateway, gateway, A2A, A2A) so a
-defender who hardens against whatever landed last round is still exposed the next. **Benching
-all 4 blanks is this starter's own aggressive choice, not a rule** — trading an attack for a
-blank, and where in the order to place it, is exactly the strategic lever RULES.md's blank
-mechanic creates. Pull it if your own deck wants to bait a false positive instead.
+The order alternates MCP, A2A, and gateway pressure where possible. All four
+blanks remain in the deck, but the ten selected rounds use the attack cards.
+Every attack names `gateway.denied` as its defense event. The validator's
+remaining WARN concerns the instructor-only live mutation engine.
 
 ---
 
